@@ -5311,58 +5311,39 @@ void MainWindow::openLocalUrl(QString urlString) {
         } else {
             qDebug() << "malformed url: " << urlString;
         }
-    } else if (scheme == "note") { // jump to a note url string
-        // try to fetch a note from the url string
-        Note note = Note::fetchByUrlString(urlString);
+    } else if (scheme == "note") { // search for the note-url
+        QRegularExpressionMatch match =
+                QRegularExpression(R"(^note:\/\/(.+)$)").match(
+                        urlString);
+        if(match.hasMatch()) {
+            QString searchFor =  match.captured(1);
+            ui->searchLineEdit->setText(searchFor);
+            filterNotes(true);
 
-        // does this note really exist?
-        if (note.isFetched()) {
-            // set current note
-            setCurrentNote(note);
+            QList<QTreeWidgetItem *> items = ui->noteTreeWidget->findItems(searchFor, Qt::MatchStartsWith);
 
-            // if note sub-folder was different than the current we will
-            // switch to that note sub-folder
-            if (!note.isInCurrentNoteSubFolder()) {
-                qDebug() << "Switching note subfolder";
+            QListIterator<QTreeWidgetItem *> itr(items);
+            if(itr.hasNext()) {
+                QTreeWidgetItem* item = itr.next();
 
-                QTreeWidgetItem* item =
-                        Utils::Gui::getTreeWidgetItemWithUserData(
-                            ui->noteSubFolderTreeWidget,
-                            note.getNoteSubFolderId());
+                const QSignalBlocker blocker(ui->noteTreeWidget);
+                Q_UNUSED(blocker);
 
-                if (item != Q_NULLPTR) {
-                    const QSignalBlocker blocker(ui->noteSubFolderTreeWidget);
-                    Q_UNUSED(blocker);
+                // to avoid that multiple notes will be selected
+                ui->noteTreeWidget->clearSelection();
 
-                    ui->noteSubFolderTreeWidget->clearSelection();
-                    item->setSelected(true);
+                ui->noteTreeWidget->setCurrentItem(item);
 
-                    on_noteSubFolderTreeWidget_currentItemChanged(item, Q_NULLPTR);
+                int noteId = item->data(0, Qt::UserRole).toInt();
+                Note note = Note::fetch(noteId);
+                if (note.isFetched()) {
+                    // set current note
+                    setCurrentNote(note);
+                    makeCurrentNoteFirstInNoteList();
                 }
             }
-
         } else {
-            // if the name of the linked note only consists of numbers we cannot
-            // use host() to get the filename, it would get converted to an
-            // ip-address
-            QRegularExpressionMatch match =
-                    QRegularExpression(R"(^\w+:\/\/(\d+)$)").match(urlString);
-            QString fileName = match.hasMatch() ?
-                               match.captured(1) : url.host();
-
-            // try to generate a useful title for the note
-            fileName = Utils::Misc::toStartCase(fileName.replace("_", " "));
-
-            // ask if we want to create a new note if note wasn't found
-            if (Utils::Gui::question(
-                    this,
-                    tr("Note was not found"),
-                    tr("Note was not found, create new note "
-                               "<strong>%1</strong>?")
-                            .arg(fileName), "open-url-create-note") ==
-                    QMessageBox::Yes) {
-                return createNewNote(fileName, false);
-            }
+            qDebug() << "malformed url: " << urlString;
         }
     } else if (scheme == "task") {
         return openTodoDialog(url.host());
