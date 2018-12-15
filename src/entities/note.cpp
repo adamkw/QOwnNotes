@@ -2102,6 +2102,24 @@ QString Note::generateTextForLink(QString text) {
 }
 
 /**
+ * @brief Extracts the note id from a note name
+ * @param text
+ * @return
+ */
+QString Note::extractNoteId(QString noteName) {
+    QString noteId = "";
+
+    QRegularExpressionMatch match =
+                    QRegularExpression(R"(^([0-9]+))").match(
+                            noteName);
+    if(match.hasMatch()) {
+        noteId =  match.captured(1);
+    }
+
+    return noteId;
+}
+
+/**
  * Generates a qint64 hash from a QString
  */
 qint64 Note::qint64Hash(const QString &str) {

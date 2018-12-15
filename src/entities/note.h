@@ -126,6 +126,8 @@ public:
 
     static QString generateTextForLink(QString text);
 
+    static QString extractNoteId(QString noteName);
+
     static qint64 qint64Hash(const QString &str);
 
     QString encryptNoteText();

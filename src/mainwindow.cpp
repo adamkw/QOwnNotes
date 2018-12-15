@@ -4488,7 +4488,7 @@ void MainWindow::handleTextNoteLinking() {
     if (dialog->result() == QDialog::Accepted) {
         QString url = dialog->getURL();
         QString noteName = dialog->getSelectedNoteName();
-        QString noteNameForLink = Note::generateTextForLink(noteName);
+        QString noteId = Note::extractNoteId(noteName);
 
         if ((noteName != "") || (url != "")) {
             QString selectedText =
@@ -4513,12 +4513,23 @@ void MainWindow::handleTextNoteLinking() {
             } else {
                 // if user has selected a note
                 if (selectedText != "") {
-                    noteName = selectedText;
+                    if(noteId != "") {
+                        QString noteUrl = "note://" + noteId;
+                        newText = "[" + selectedText + "](" + noteUrl + ")";
+                    }
+                    else {
+                        QString noteUrl = "note://" + noteName;
+                        newText = "[" + selectedText + "](" + noteUrl + ")";
+                    }
+                } else {
+                    if(noteId != "") {
+                        newText = "[[" + noteId + "]]";
+                    }
+                    else {
+                        QString noteUrl = "note://" + noteName;
+                        newText = "[[" + noteName + "]]";
+                    }
                 }
-
-                QString noteUrl = "note://" + noteNameForLink;
-
-                newText = "[" + noteName + "](" + noteUrl + ")";
             }
 
             textEdit->textCursor().insertText(newText);
