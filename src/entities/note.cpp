@@ -2546,9 +2546,16 @@ QString Note::getInsertMediaMarkdown(QFile *file, bool addNewLine,
             }
         }
 
+
+        QString randomNumber = "";
+
+        if(mediaDir.entryList().contains(fileInfo.baseName() + "." + suffix)) {
         // find a random name for the new file
-        QString newFileName =
-                QString::number(qrand()) + "." + suffix;
+            qDebug() << __func__ << " - file already present. generating new name";
+            randomNumber = "_" + QString::number(qrand());
+        }
+
+        QString newFileName = fileInfo.baseName() + randomNumber + "." + suffix;
 
         QString newFilePath = mediaDir.path() + QDir::separator() + newFileName;
 
