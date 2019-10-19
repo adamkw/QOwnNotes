@@ -4666,8 +4666,22 @@ void MainWindow::handleTextNoteLinking() {
                 newText = chosenLinkName != "" ?
                             "[" + chosenLinkName + "](" + url + ")" :
                             "<" + url + ">";
+
+            // if user has selected a note
             } else {
-                // if user has selected a note
+                // add as [[WikiLink]] if the allocated checkbox is checked.
+                if (dialog->isAddAsWikiLink()){
+                    // If the note name starts with a numeric ID, then use the ID for link.
+                    QRegularExpressionMatch match =
+                        QRegularExpression(R"(^([0-9]+))").match(noteName);
+                    if(match.hasMatch()) {
+                        noteName =  match.captured(1);
+                    }
+
+                    newText = "[[" + noteName + "]]";
+
+                // otherwise add as a markdown link
+                } else {
                 if (chosenLinkName != "") {
                     noteName = chosenLinkName;
                 }
@@ -4675,6 +4689,7 @@ void MainWindow::handleTextNoteLinking() {
                 QString noteUrl = currentNote.getNoteUrlForLinkingTo(dialog->getSelectedNote());
 
                 newText = "[" + noteName + "](" + noteUrl + ")";
+                }
             }
 
             if (!linkDescription.isEmpty()) {

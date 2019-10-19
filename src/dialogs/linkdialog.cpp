@@ -19,12 +19,17 @@ LinkDialog::LinkDialog(QString dialogTitle, QWidget *parent) :
         MasterDialog(parent),
         ui(new Ui::LinkDialog) {
     ui->setupUi(this);
-    ui->urlEdit->setFocus();
+    ui->searchLineEdit->setFocus();
     firstVisibleNoteListRow = 0;
 
     if (!dialogTitle.isEmpty()) {
         this->setWindowTitle(dialogTitle);
     }
+
+    QSettings settings;
+    connect(ui->addAsWikiLinkCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(on_addAsWikiLinkCheckbox_toggled(int)));
+    ui->addAsWikiLinkCheckBox->setChecked(settings.value("LinkDialog/addAsWikiLink").toBool());
 
     QStringList nameList = Note::fetchNoteNames();
     ui->searchLineEdit->installEventFilter(this);
@@ -50,6 +55,9 @@ LinkDialog::LinkDialog(QString dialogTitle, QWidget *parent) :
 }
 
 LinkDialog::~LinkDialog() {
+    QSettings settings;
+        settings.setValue("LinkDialog/addAsWikiLink", ui->addAsWikiLinkCheckBox->isChecked());
+
     delete ui;
 }
 
@@ -270,6 +278,16 @@ void LinkDialog::addDirectoryUrl() {
     }
 }
 
+void LinkDialog::on_addAsWikiLinkCheckbox_toggled(const int state) {
+    if(state == 0) { // unchecked
+        ui->nameLineEdit->setEnabled(true);
+        ui->descriptionLineEdit->setEnabled(true);
+    } else { // checked
+        ui->nameLineEdit->setEnabled(false);
+        ui->descriptionLineEdit->setEnabled(false);
+    }
+}
+
 void LinkDialog::on_urlEdit_textChanged(const QString &arg1) {
     auto url = QUrl(arg1);
 
@@ -307,4 +325,8 @@ void LinkDialog::setupFileUrlMenu() {
             this, SLOT(addDirectoryUrl()));
 
     ui->fileUrlButton->setMenu(addMenu);
+}
+
+bool LinkDialog::isAddAsWikiLink() {
+    return ui->addAsWikiLinkCheckBox->isChecked();
 }

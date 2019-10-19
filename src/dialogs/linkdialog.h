@@ -23,8 +23,10 @@ public:
     void setLinkName(QString text);
     QString getLinkDescription();
     QString getTitleForUrl(const QUrl& url);
+    bool isAddAsWikiLink();
 
 private slots:
+    void on_addAsWikiLinkCheckbox_toggled(const int state);
     void on_searchLineEdit_textChanged(const QString &arg1);
     void on_notesListWidget_doubleClicked(const QModelIndex &index);
     void on_urlEdit_textChanged(const QString &arg1);
