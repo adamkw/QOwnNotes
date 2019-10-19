@@ -2871,9 +2871,14 @@ QString Note::getInsertMediaMarkdown(QFile *file, bool addNewLine,
             }
         }
 
-        // find a random name for the new file
-        QString newFileName =
-                QString::number(qrand()) + "." + suffix;
+        // If a file with the given name is already present in the media folder,
+        // then add a random number to the file name.
+        QString randomNumber = "";
+        if(mediaDir.entryList().contains(fileInfo.baseName() + "." + suffix)) {
+            randomNumber = "_" + QString::number(qrand());
+        }
+
+        QString newFileName = fileInfo.baseName() + randomNumber + "." + suffix;
 
         QString newFilePath = mediaDir.path() + QDir::separator() + newFileName;
 
@@ -2956,9 +2961,14 @@ QString Note::getInsertAttachmentMarkdown(QFile *file, QString fileName,
 
         QFileInfo fileInfo(file->fileName());
 
-        // find a random name for the new file
-        QString newFileName =
-                QString::number(qrand()) + "." + fileInfo.suffix();
+        // If a file with the given name is already present in the attachment folder,
+        // then add a random number to the file name.
+        QString randomNumber = "";
+        if(dir.entryList().contains(fileInfo.baseName() + "." + fileInfo.suffix())) {
+            randomNumber = "_" + QString::number(qrand());
+        }
+
+        QString newFileName = fileInfo.baseName() + randomNumber + "." + fileInfo.suffix();
 
         QString newFilePath = dir.path() + QDir::separator() + newFileName;
 
