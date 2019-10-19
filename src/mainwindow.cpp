@@ -334,9 +334,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // ignores note clicks in QMarkdownTextEdit in the note text edit
     ui->noteTextEdit->setIgnoredClickUrlSchemata(
-            QStringList() << "note" << "task");
+            QStringList() << "note" << "task" << "notesearch");
     ui->encryptedNoteTextEdit->setIgnoredClickUrlSchemata(
-            QStringList() << "note" << "task");
+            QStringList() << "note" << "task" << "notesearch");
 
     // handle note url externally in the note text edit
     QObject::connect(ui->noteTextEdit, SIGNAL(urlClicked(QString)),
@@ -5501,7 +5501,7 @@ void MainWindow::on_noteTextView_anchorClicked(const QUrl &url) {
     qDebug() << __func__ << " - 'url': " << url;
     QString scheme = url.scheme();
 
-    if ((scheme == "note" || scheme == "noteid" || scheme == "task" || scheme == "checkbox") ||
+    if ((scheme == "note" || scheme == "noteid" || scheme == "task" || scheme == "checkbox" || scheme == "notesearch") ||
             (scheme == "file" && Note::fileUrlIsNoteInCurrentNoteFolder(url))) {
         openLocalUrl(url.toString());
     } else {
@@ -5639,6 +5639,38 @@ void MainWindow::openLocalUrl(QString urlString) {
     } else if (scheme == "file" && urlWasNotValid) {
         // open urls that previously were not valid
         QDesktopServices::openUrl(QUrl(urlString));
+    } else if(scheme == "notesearch") {
+        // search notes for the given expression
+        QRegularExpressionMatch match =
+                QRegularExpression(R"(^notesearch:\/\/(.+)$)").match(
+                    urlString);
+        if(match.hasMatch()) {
+            QString searchFor = match.captured(1);
+            ui->searchLineEdit->setText(searchFor);
+            filterNotes(true);
+
+            QList<QTreeWidgetItem *> items = ui->noteTreeWidget->findItems(searchFor, Qt::MatchStartsWith);
+
+            QListIterator<QTreeWidgetItem *> itr(items);
+            if(itr.hasNext()) {
+                QTreeWidgetItem* item = itr.next();
+
+                const QSignalBlocker blocker(ui->noteTreeWidget);
+                Q_UNUSED(blocker);
+
+                // Ensure that multiple notes won't be selected
+                ui->noteTreeWidget->clearSelection();
+                ui->noteTreeWidget->setCurrentItem(item);
+
+                // If a note's id matches the search string, then open that note.
+                int noteId = item->data(0, Qt::UserRole).toInt();
+                Note note = Note::fetch(noteId);
+                if (note.isFetched()) {
+                    setCurrentNote(note);
+                    makeCurrentNoteFirstInNoteList();
+                }
+            }
+        }
     }
 }
 
